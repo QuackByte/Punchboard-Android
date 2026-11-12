@@ -13,7 +13,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.quackbyte.punchboard.MainActivity
 import dev.quackbyte.punchboard.R
+import dev.quackbyte.punchboard.punch.PunchActionReceiver
 import dev.quackbyte.punchboard.punch.PunchActions
+import androidx.core.graphics.drawable.IconCompat
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -89,35 +91,74 @@ object Notifications {
         notifySafely(context, idFor(reminder.kind), builder.build())
     }
 
-    /** Pinned while punched in: a live chronometer since the session started. */
-    fun showLiveClock(context: Context, session: RunningSession, clockedMinutes: Int, targetMinutes: Int) {
+    /**
+     * The punch as a Live Update (Android 16+): a promoted, ongoing
+     * notification with a status-bar chip counting up today's time and a
+     * progress bar towards today's target. Older Android versions show the
+     * same notification without the promotion.
+     */
+    fun showLiveClock(context: Context, state: LiveClockState) {
         if (!canPost(context)) return
-        val startedAt = session.startedAt() ?: return
+        val signal = 0xFFFF7033.toInt()
+        val overtime = 0xFF8951EC.toInt()
+        val style = NotificationCompat.ProgressStyle()
+            .setStyledByProgress(true)
+            .setProgressTrackerIcon(IconCompat.createWithResource(context, R.drawable.ic_tile))
+            .setProgressSegments(
+                state.segments.map { segment ->
+                    NotificationCompat.ProgressStyle.Segment(segment.length.coerceAtLeast(1))
+                        .setColor(if (segment.kind == LiveClockState.Kind.Target) signal else overtime)
+                },
+            )
+            .setProgress(state.progress)
+        if (state.overTarget) {
+            style.addProgressPoint(NotificationCompat.ProgressStyle.Point(state.targetMinutes).setColor(signal))
+        }
+
         val builder = NotificationCompat.Builder(context, CHANNEL_CLOCK)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(context.getString(R.string.live_clock_title, session.start))
-            .setUsesChronometer(true)
-            .setWhen(startedAt.toEpochMillis())
-            .setShowWhen(true)
+            .setColor(signal)
+            .setContentTitle(state.title)
+            .setContentText(state.text)
+            .setStyle(style)
+            .setRequestPromotedOngoing(true)
             .setOngoing(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(false)
+            .setWhen(state.chronometerBase.toEpochMillis())
+            .setShowWhen(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(openApp(context))
+            .setDeleteIntent(liveDismissed(context, state.sessionKey))
             .addAction(0, context.getString(R.string.action_punch_out), PunchActions.broadcast(context, PunchActions.ACTION_PUNCH_OUT, 13))
-        if (targetMinutes > 0) {
-            builder
-                .setContentText(
-                    context.getString(
-                        R.string.live_clock_body,
-                        Durations.format(clockedMinutes),
-                        Durations.format(targetMinutes),
-                    ),
-                )
-                .setProgress(targetMinutes, clockedMinutes.coerceAtMost(targetMinutes), false)
-        }
         notifySafely(context, ID_LIVE_CLOCK, builder.build())
     }
+
+    /** Whether the user lets Punchboard show Live Updates (always true before Android 16). */
+    fun canPromote(context: Context): Boolean =
+        Build.VERSION.SDK_INT < 36 || context.getSystemService(NotificationManager::class.java).canPostPromotedNotifications()
+
+    /** Opens the system page where Live Updates are turned on for the app. */
+    fun promotionSettings(context: Context): Intent =
+        if (Build.VERSION.SDK_INT >= 36) {
+            Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+        } else {
+            Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+        }
+
+    private fun liveDismissed(context: Context, sessionKey: String): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        14,
+        Intent(context, PunchActionReceiver::class.java)
+            .setAction(PunchActions.ACTION_LIVE_DISMISSED)
+            .putExtra(PunchActions.EXTRA_SESSION, sessionKey),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     fun cancelReminder(context: Context, kind: ReminderKind) {
         NotificationManagerCompat.from(context).cancel(idFor(kind))

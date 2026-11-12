@@ -241,6 +241,12 @@ private fun RemindersSection(vm: TrackerViewModel) {
         )
     }
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
+    // Re-read when coming back from the system settings page.
+    var promoted by remember { mutableStateOf(dev.quackbyte.punchboard.reminders.Notifications.canPromote(context)) }
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        promoted = dev.quackbyte.punchboard.reminders.Notifications.canPromote(context)
+        onPauseOrDispose { }
+    }
     var editing by remember { mutableStateOf<String?>(null) }
     fun update(next: ReminderSettings) {
         vm.setReminders(next)
@@ -288,11 +294,32 @@ private fun RemindersSection(vm: TrackerViewModel) {
         )
         settings.forgotPunchOutAt?.let { time -> ValueRow("Remind at", time.toString(), { editing = "out" }) }
         SwitchRow(
-            "Live clock notification",
-            "Pinned while you're punched in, with a Punch out button.",
+            "Live Update",
+            "While you're punched in: a timer in the status bar and on the lock screen, today's progress and a Punch out button.",
             settings.liveClock,
             { update(settings.copy(liveClock = it)) },
         )
+        if (settings.liveClock && granted && !promoted) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(pb.muted.copy(alpha = 0.6f))
+                    .clickable(role = Role.Button) {
+                        context.startActivity(dev.quackbyte.punchboard.reminders.Notifications.promotionSettings(context))
+                    }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                androidx.compose.material3.Icon(Lucide.Clock, null, Modifier.size(18.dp), tint = pb.mutedForeground)
+                Text(
+                    "Live Updates are off for Punchboard, so the timer shows as a plain notification. Tap to turn them on.",
+                    Modifier.padding(start = 10.dp),
+                    style = PbType.bodySmall,
+                    color = pb.foreground,
+                )
+            }
+        }
         Hint("Add the Punch tile to Quick Settings or the widget to your home screen to punch in and out from anywhere.")
     }
 

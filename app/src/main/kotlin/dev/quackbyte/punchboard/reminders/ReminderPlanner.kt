@@ -85,8 +85,8 @@ object ReminderPlanner {
     /** How long after the start time the punch-in nudge may still fire. */
     const val PUNCH_IN_WINDOW_MINUTES = 120L
 
-    /** While punched in, refresh the live clock's progress this often. */
-    const val LIVE_REFRESH_MINUTES = 15L
+    /** While punched in, refresh the Live Update's progress this often. */
+    const val LIVE_REFRESH_MINUTES = 5L
 
     fun plan(
         now: LocalDateTime,
