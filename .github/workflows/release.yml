@@ -20,6 +20,10 @@ jobs:
     name: Release PR + changelog
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    # The organization doesn't let github.token open pull requests, so
+    # release-please uses RELEASES_TOKEN, as in the desktop repo.
+    env:
+      RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASES_TOKEN != '' && secrets.RELEASES_TOKEN || github.token }}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -27,6 +31,7 @@ jobs:
       - id: release
         uses: googleapis/release-please-action@v5
         with:
+          token: ${{ env.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
