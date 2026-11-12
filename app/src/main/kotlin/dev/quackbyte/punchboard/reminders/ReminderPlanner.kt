@@ -2,12 +2,8 @@ package dev.quackbyte.punchboard.reminders
 
 import dev.quackbyte.punchboard.model.Clock
 import dev.quackbyte.punchboard.model.DataFile
-import dev.quackbyte.punchboard.model.DayKeys
-import dev.quackbyte.punchboard.model.MonthKeys
-import dev.quackbyte.punchboard.model.PayslipPeriods
+import dev.quackbyte.punchboard.domain.Tracker
 import dev.quackbyte.punchboard.model.TimeEntry
-import dev.quackbyte.punchboard.model.TrackerData
-import dev.quackbyte.punchboard.model.WeekdayKeys
 import dev.quackbyte.punchboard.model.WorkRules
 import dev.quackbyte.punchboard.model.workedTime
 import java.time.LocalDate
@@ -48,38 +44,18 @@ data class TodayStatus(
         workedTime(entries, rules, now.hour * 60 + now.minute).clockedMinutes
 
     companion object {
-        /**
-         * Reads today's schedule from the payslip period [date] falls in. A
-         * period the desktop hasn't opened yet has no month record, so the
-         * latest earlier month's schedule carries forward, as on the desktop.
-         *
-         * TODO: with "balanced weeks" on, the desktop's target is what's left
-         *  of the week, not the fixed hours per day. Use that once the period
-         *  calculations are ported.
-         */
+        /** Reads today from the payslip period [date] falls in, with the desktop's daily target. */
         fun from(data: DataFile, date: LocalDate): TodayStatus {
-            val endMonth = PayslipPeriods.endMonthFor(date, data.settings.payslipStartDay)
-            val monthKey = MonthKeys.of(endMonth)
-            val month = data.months[monthKey]
-                ?: data.months.filterKeys { MonthKeys.parse(it)?.let { m -> m < endMonth } == true }
-                    .maxByOrNull { it.key }?.value
-                ?: TrackerData()
-
-            val dayKey = DayKeys.of(date)
-            val hasException = month.exceptions[dayKey] != null
-            val isWorkday = WeekdayKeys.of(date.dayOfWeek) in month.selectedDays && !hasException
-            val entries = data.months[monthKey]?.timeEntries?.get(dayKey).orEmpty()
-
-            val running = data.months[monthKey]?.timeEntries.orEmpty().firstNotNullOfOrNull { (key, list) ->
-                list.firstOrNull { it.isRunning }?.let { entry -> DayKeys.parse(key)?.let { RunningSession(it, entry.start) } }
-            }
-
+            val tracker = Tracker(data)
+            val month = tracker.currentPeriod(date)
+            val target = tracker.todayTarget(date)
+            val running = tracker.openSession(month)?.let { open -> open.date?.let { RunningSession(it, open.entry.start) } }
             return TodayStatus(
                 date = date,
-                isWorkday = isWorkday,
-                entries = entries,
-                targetMinutes = if (isWorkday) (month.hoursPerDay * 60).roundToInt() else 0,
-                rules = WorkRules.from(data.settings),
+                isWorkday = target.isWorkday,
+                entries = tracker.todayEntries(date),
+                targetMinutes = (target.hours * 60).roundToInt(),
+                rules = tracker.rules,
                 running = running,
             )
         }
@@ -117,6 +93,7 @@ object ReminderPlanner {
         settings: ReminderSettings,
         today: TodayStatus,
         firedToday: Set<ReminderKind>,
+        punchInSnoozedUntil: LocalDateTime? = null,
     ): ReminderPlan {
         val due = mutableListOf<DueReminder>()
         val next = mutableListOf<LocalDateTime>()
@@ -128,11 +105,14 @@ object ReminderPlanner {
             when {
                 now < start -> next += start
                 else -> {
-                    val inWindow = !now.isAfter(start.plusMinutes(PUNCH_IN_WINDOW_MINUTES))
-                    if (inWindow && today.isWorkday && today.entries.isEmpty() && today.running == null &&
-                        ReminderKind.PunchIn !in firedToday
-                    ) {
-                        due += DueReminder(ReminderKind.PunchIn, time = time)
+                    val snoozed = punchInSnoozedUntil?.takeIf { it.toLocalDate() == today.date }
+                    val windowEnd = maxOf(start.plusMinutes(PUNCH_IN_WINDOW_MINUTES), snoozed ?: start)
+                    val waiting = today.isWorkday && today.entries.isEmpty() && today.running == null &&
+                        ReminderKind.PunchIn !in firedToday && !now.isAfter(windowEnd)
+                    when {
+                        !waiting -> Unit
+                        snoozed != null && now < snoozed -> next += snoozed
+                        else -> due += DueReminder(ReminderKind.PunchIn, time = time)
                     }
                     next += today.date.plusDays(1).atTime(time)
                 }

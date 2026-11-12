@@ -43,6 +43,22 @@ class ReminderPreferences(context: Context) {
         }
     }
 
+    /** Re-arms a reminder that already fired, to show again at [until]. */
+    fun snooze(kind: ReminderKind, until: java.time.LocalDateTime) {
+        val date = until.toLocalDate()
+        val fired = firedOn(date) - kind
+        prefs.edit {
+            putString(KEY_FIRED_DATE, date.toString())
+            putStringSet(KEY_FIRED, fired.map { it.name }.toSet())
+            putString(KEY_SNOOZE_PREFIX + kind.name, until.toString())
+        }
+    }
+
+    fun snoozedUntil(kind: ReminderKind): java.time.LocalDateTime? =
+        prefs.getString(KEY_SNOOZE_PREFIX + kind.name, null)?.let { runCatching { java.time.LocalDateTime.parse(it) }.getOrNull() }
+
+    fun clearSnooze(kind: ReminderKind) = prefs.edit { remove(KEY_SNOOZE_PREFIX + kind.name) }
+
     private fun parseTime(value: String): LocalTime? = runCatching { LocalTime.parse(value) }.getOrNull()
 
     private companion object {
@@ -52,5 +68,6 @@ class ReminderPreferences(context: Context) {
         const val KEY_LIVE_CLOCK = "live_clock"
         const val KEY_FIRED_DATE = "fired_date"
         const val KEY_FIRED = "fired"
+        const val KEY_SNOOZE_PREFIX = "snooze_"
     }
 }

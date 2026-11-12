@@ -11,3 +11,5 @@
 *.apk
 *.aab
 app/build/
+keystore.properties
+*.jks

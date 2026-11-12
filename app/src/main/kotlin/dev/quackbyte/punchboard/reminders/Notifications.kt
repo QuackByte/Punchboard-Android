@@ -13,6 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.quackbyte.punchboard.MainActivity
 import dev.quackbyte.punchboard.R
+import dev.quackbyte.punchboard.punch.PunchActions
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -70,7 +71,7 @@ object Notifications {
             ReminderKind.ForgotPunchOut -> context.getString(R.string.reminder_forgot_title) to
                 context.getString(R.string.reminder_forgot_body, reminder.since.orEmpty(), reminder.time.toString())
         }
-        val notification = NotificationCompat.Builder(context, CHANNEL_REMINDERS)
+        val builder = NotificationCompat.Builder(context, CHANNEL_REMINDERS)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
@@ -78,8 +79,14 @@ object Notifications {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(openApp(context))
             .setAutoCancel(true)
-            .build()
-        notifySafely(context, idFor(reminder.kind), notification)
+        when (reminder.kind) {
+            ReminderKind.PunchIn -> builder
+                .addAction(0, context.getString(R.string.action_punch_in), PunchActions.broadcast(context, PunchActions.ACTION_PUNCH_IN, 10))
+                .addAction(0, context.getString(R.string.action_snooze), PunchActions.broadcast(context, PunchActions.ACTION_SNOOZE, 11))
+            ReminderKind.StillOnClock, ReminderKind.ForgotPunchOut -> builder
+                .addAction(0, context.getString(R.string.action_punch_out), PunchActions.broadcast(context, PunchActions.ACTION_PUNCH_OUT, 12))
+        }
+        notifySafely(context, idFor(reminder.kind), builder.build())
     }
 
     /** Pinned while punched in: a live chronometer since the session started. */
@@ -97,6 +104,7 @@ object Notifications {
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setContentIntent(openApp(context))
+            .addAction(0, context.getString(R.string.action_punch_out), PunchActions.broadcast(context, PunchActions.ACTION_PUNCH_OUT, 13))
         if (targetMinutes > 0) {
             builder
                 .setContentText(
@@ -109,6 +117,10 @@ object Notifications {
                 .setProgress(targetMinutes, clockedMinutes.coerceAtMost(targetMinutes), false)
         }
         notifySafely(context, ID_LIVE_CLOCK, builder.build())
+    }
+
+    fun cancelReminder(context: Context, kind: ReminderKind) {
+        NotificationManagerCompat.from(context).cancel(idFor(kind))
     }
 
     fun hideLiveClock(context: Context) {
@@ -135,14 +147,5 @@ object Notifications {
 
 /** "8h 04m", "45m", "8h" — the desktop's duration style. */
 object Durations {
-    fun format(minutes: Int): String {
-        val safe = maxOf(0, minutes)
-        val h = safe / 60
-        val m = safe % 60
-        return when {
-            h == 0 -> "${m}m"
-            m == 0 -> "${h}h"
-            else -> "${h}h %02dm".format(m)
-        }
-    }
+    fun format(minutes: Int): String = dev.quackbyte.punchboard.model.formatMinutes(minutes)
 }

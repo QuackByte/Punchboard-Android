@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Existing release tag to rebuild the APK for (e.g. v1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release PR + changelog
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # The organization doesn't let github.token open pull requests, so
+    # release-please uses RELEASES_TOKEN, as in the desktop repo.
+    env:
+      RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASES_TOKEN != '' && secrets.RELEASES_TOKEN || github.token }}
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ env.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Built in the same run that creates the release, so github.token is
+  # enough. Rebuild an existing release with "Run workflow" and its tag.
+  apk:
+    name: Build signed APK
+    needs: release
+    if: always() && (needs.release.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || needs.release.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::The KEYSTORE_BASE64 secret is missing; see README › Releases."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "PUNCHBOARD_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        env:
+          PUNCHBOARD_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          PUNCHBOARD_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          PUNCHBOARD_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew --console=plain testReleaseUnitTest assembleRelease
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${TAG#v}"
+          cp app/build/outputs/apk/release/app-release.apk "Punchboard-$version.apk"
+          gh release upload "$TAG" "Punchboard-$version.apk" --clobber
