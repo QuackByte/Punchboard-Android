@@ -72,7 +72,7 @@ jobs:
           PUNCHBOARD_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           PUNCHBOARD_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           PUNCHBOARD_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew --console=plain testReleaseUnitTest assembleRelease
+        run: ./gradlew --console=plain testDebugUnitTest assembleRelease
 
       - name: Upload to the release
         env:
