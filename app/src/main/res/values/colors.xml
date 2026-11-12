@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#0FB5D4</color>
+    <!-- The punch clock is always "ink", in both themes (desktop tokens). -->
+    <color name="ink">#080A0D</color>
+    <color name="ink_foreground">#F3F0EA</color>
+    <color name="ink_muted">#959AA6</color>
+    <color name="ink_border">#23262E</color>
+    <color name="brand">#20D2EE</color>
+    <color name="signal">#FF6B33</color>
+    <color name="on_brand">#04222B</color>
+    <color name="on_signal">#2E1004</color>
+    <color name="vacation_dot">#F59F0A</color>
+    <color name="splash_background">#F1EEE8</color>
 </resources>

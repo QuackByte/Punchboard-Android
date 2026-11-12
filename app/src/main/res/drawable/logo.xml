@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app icon as a flat vector, for in-app headers. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <path android:pathData="M229,0h566a229,229 0,0 1,229 229v566a229,229 0,0 1,-229 229h-566a229,229 0,0 1,-229 -229v-566a229,229 0,0 1,229 -229z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="0"
+                android:endY="1024"
+                android:startX="0"
+                android:startY="0"
+                android:type="linear">
+                <item android:color="#FF22D3EE" android:offset="0" />
+                <item android:color="#FF0891B2" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M388,232h248a56,56 0,0 1,56 56v448a56,56 0,0 1,-56 56h-248a56,56 0,0 1,-56 -56v-448a56,56 0,0 1,56 -56z M486,232a26,26 0,0 0,52 0z M386,680a34,34 0,1 0,68 0a34,34 0,1 0,-68 0z M472,560a40,40 0,1 0,80 0a40,40 0,1 0,-80 0z M558,440a46,46 0,1 0,92 0a46,46 0,1 0,-92 0z" />
+</vector>

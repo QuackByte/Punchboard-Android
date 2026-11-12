@@ -116,7 +116,9 @@ class ReminderPlannerTest {
 
         val today = TodayStatus.from(data, wednesday)
         assertTrue(today.isWorkday)
-        assertEquals(480, today.targetMinutes)
+        // Balanced week: Monday counts its scheduled 8h, Tuesday 7h 43m, so
+        // the 24h 17m left is shared over Wednesday to Friday.
+        assertEquals(486, today.targetMinutes)
         assertEquals(RunningSession(wednesday, "13:15"), today.running)
         assertEquals(361, today.clockedMinutes(at("15:42")))
 

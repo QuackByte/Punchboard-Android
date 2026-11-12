@@ -2,35 +2,65 @@
 
 The Android port of [Punchboard](https://github.com/QuackByte/punchboard), the
 time card for tracking daily work hours, estimating pay and keeping an eye on
-your yearly workload.
+your yearly workload. It looks and counts like the desktop app, and it can
+share one data file with it.
 
-> **Status: early.** The data layer, desktop import and reminders engine are
-> in place; the UI is being designed (see "Roadmap"). The app currently opens
-> to a placeholder screen.
+**Download:** the latest signed APK is on the
+[Releases page](https://github.com/QuackByte/Punchboard-Android/releases).
+Open it on your phone and allow installing from your browser or file manager.
+Android 8.0 or newer.
 
 ## Features
 
-- **Same data file as the desktop** — the phone keeps its time card in the
-  desktop's `punchboard.json` format, so a file moves between desktop and
-  phone without conversion. Saving keeps fields this version doesn't know
-  about yet, so a newer desktop's settings survive a round trip.
-- **Import from Punchboard desktop** — pick the `punchboard.json` your desktop
-  saves to (from Drive, Dropbox, Downloads…) and see what it holds (months,
-  days logged, sessions, vacation and sick days) before importing.
-- **Reminders** — each one fires at most once a day:
-  - *Punch-in nudge* on workdays when the card is still empty at your start
-    time (up to two hours after it).
-  - *Still on the clock?* once today's target is done while punched in.
-  - *Forgot to punch out?* if the clock is still running at a set time.
-- **Live clock notification** — pinned while you're punched in, with a running
-  timer and today's progress.
+- **Punch clock** — punch in and out with one tap; the running session is
+  tracked live and saved as a real start/end time. Shows when you'll be done
+  for the day, automatic break included, and hours banked or owed.
+- **Time card** — the payslip period as a calendar: tap a day to log
+  sessions with quick entry (`9-13, 14-18:30`, `8:45 to 17`, or a plain
+  total like `7.5` / `7h 30m`) or by editing start/end times, with a note on
+  each session. Long-press a workday to mark it vacation or sick, or reset it
+  to the schedule. Each week shows its total and the carried balance.
+- **Time rules** — automatic unpaid break on long days, punch rounding,
+  overtime rate for days off and optionally long workdays.
+- **Balanced weeks** — today's target is what's left of the week's hours,
+  with hours carried between weeks on a salary (from a start date, resetting
+  each January or capped), exactly as on the desktop.
+- **Pay** — by the hour or on a fixed salary, tax and deductions, an optional
+  second currency, and the payslip's net pay.
+- **Year** — hours per period across the year, and vacation taken, booked
+  and left against your allowance.
+- **Timesheet export** — share the period as CSV or a one-page PDF.
+- **Undo** — reset a day or delete a session by mistake? Undo it from the
+  toast.
+- **Light and dark theme**, following the system or set in Settings.
+
+### Desktop data and sync
+
+- **Import** — pick the `punchboard.json` your desktop app saves to (from
+  Drive, Dropbox, Downloads…) and see what it holds before importing.
+- **Sync** — keep using that same file: the phone saves back to it and
+  picks up desktop changes when it opens. Changes merge day by day; if both
+  sides change the same day, the one saved last wins. Fields this version
+  doesn't know about are kept, so a newer desktop's settings survive.
+- **Backups** — export and restore the whole card as JSON.
+
+### Reminders and quick access
+
+- *Punch-in nudge* on workdays when the card is still empty at your start
+  time, with **Punch in** and **In 15 min** buttons.
+- *Still on the clock?* once today's target is done, with **Punch out**.
+- *Forgot to punch out?* if the clock is still running at a set time.
+- **Live clock notification** while punched in, with a running timer,
+  today's progress and **Punch out**.
+- **Quick Settings tile** and **home-screen widget** to punch in and out from
+  anywhere.
 
 ## Development
 
 Requires JDK 17 and the Android SDK (compile SDK 37).
 
 ```bash
-# Unit tests: data file round trip, keys, time maths, reminder planning
+# Unit tests: the desktop's calculation tests, ported, plus file, sync and edit tests
 ./gradlew testDebugUnitTest
 
 # Debug APK
@@ -39,15 +69,20 @@ Requires JDK 17 and the Android SDK (compile SDK 37).
 
 ### Project structure
 
-- `model/` — the data file types, key formats (`DayKeys`, `MonthKeys`,
-  `PayslipPeriods`) and time maths (`Clock`, `WorkRules`, `workedTime`),
-  ported from the desktop's `types.ts`, `utils.ts` and `calculations.ts`.
-- `data/` — `DataFileCodec` (lossless JSON read/write), `PunchboardStore`
-  (the app's `punchboard.json`, written atomically) and import.
-- `reminders/` — `ReminderPlanner` (pure: what's due, when to look again),
-  `ReminderEngine` (reads the card, posts notifications, books the next
-  check), `ReminderScheduler` (one inexact `AlarmManager` alarm) and
-  `ReminderReceiver` (alarms, boot, clock changes).
+- `model/` — the data file types, key formats and every hour/pay
+  calculation, ported from the desktop's `types.ts`, `utils.ts`,
+  `calculations.ts` and `timesheet.ts` together with their tests.
+- `domain/` — `Tracker` reads a card the way the desktop's `useWorkTracker`
+  does (months not saved yet, today's balanced target, balances);
+  `TrackerEditor` makes the same edits (punches, quick entry, marks,
+  settings that carry forward).
+- `data/` — `DataFileCodec` (lossless JSON), `PunchboardStore` (the app's
+  copy, written atomically), `PunchboardRepository` (every edit goes
+  through it; syncs with the shared file) and `JsonMerge` (three-way merge).
+- `reminders/`, `punch/`, `widget/` — notifications, punch actions, the
+  widget and the Quick Settings tile.
+- `ui/` — Jetpack Compose screens in the desktop's design: card-stock paper
+  and ink, Bricolage Grotesque and JetBrains Mono.
 
 ### Compatibility notes
 
@@ -57,20 +92,20 @@ The desktop's file format has two quirks that must be preserved:
   (`2026-9-14` is 14 October 2026). Month keys are `YYYY-MM`, one-based.
 - A running session is written as `"end": null` — the key must be present.
 
-### Stack
+## Releases
 
-Kotlin, Jetpack Compose, kotlinx.serialization. Min SDK 26.
+Releases are automated with
+[release-please](https://github.com/googleapis/release-please), as on the
+desktop: merging to `main` with conventional commits opens a release PR, and
+merging that PR tags a release, builds a signed APK and attaches it.
 
-## Roadmap
-
-1. Pick the UI direction (Punchboard look vs. Material 3) and build the
-   screens: today/punch clock, time card, day editor, year, pay, settings.
-2. Port the period calculations (balanced weeks, carried balance, overtime,
-   pay) so reminders use the same daily target as the desktop.
-3. Punch in/out from notification actions, a Quick Settings tile and a
-   home-screen widget.
-4. Optional live sync with the desktop's file.
+Signing uses the repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`,
+`KEY_ALIAS` and `KEY_PASSWORD`. For a signed build locally, put a
+`keystore.properties` (gitignored) next to this README with `storeFile`,
+`storePassword`, `keyAlias` and `keyPassword`. Keep the keystore backed up:
+updates only install over an APK signed with the same key.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Fonts: Bricolage Grotesque and JetBrains Mono, under the SIL
+Open Font License (see `licenses/`). Icons from Lucide (ISC).

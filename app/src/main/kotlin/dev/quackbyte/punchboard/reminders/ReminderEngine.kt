@@ -35,7 +35,13 @@ object ReminderEngine {
         val preferences = ReminderPreferences(context)
         val settings = preferences.settings
         val today = TodayStatus.from(document.data, now.toLocalDate())
-        val plan = ReminderPlanner.plan(now, settings, today, preferences.firedOn(today.date))
+        val plan = ReminderPlanner.plan(
+            now,
+            settings,
+            today,
+            preferences.firedOn(today.date),
+            preferences.snoozedUntil(ReminderKind.PunchIn),
+        )
 
         plan.due.forEach { Notifications.postReminder(context, it) }
         preferences.markFired(today.date, plan.due.map { it.kind })
@@ -47,8 +53,19 @@ object ReminderEngine {
             Notifications.hideLiveClock(context)
         }
 
+        // A reminder whose moment has passed (punched in, or out) shouldn't linger.
+        if (today.running != null || today.entries.isNotEmpty()) dismiss(context, ReminderKind.PunchIn)
+        if (today.running == null) {
+            dismiss(context, ReminderKind.StillOnClock)
+            dismiss(context, ReminderKind.ForgotPunchOut)
+        }
+
         ReminderScheduler.schedule(context, plan.nextCheck)
     }
+
+    fun dismiss(context: Context, kind: ReminderKind) = Notifications.cancelReminder(context, kind)
+
+    fun dismissAll(context: Context) = ReminderKind.entries.forEach { dismiss(context, it) }
 }
 
 /** One pending alarm that wakes [ReminderReceiver] for the next check. */
