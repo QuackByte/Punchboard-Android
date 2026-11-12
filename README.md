@@ -61,8 +61,10 @@ same look, the same numbers, and the same data file.
   data stays in a file you own.
 
 <p align="center">
-  <img src="docs/screenshots/live-update.png" alt="The Live Update in the notification shade: on the clock since 07:58, today 1h 59m of 8h 41m, done at 17:09, with a progress bar and a Punch out button" width="270" />
-  &nbsp;
+  <img src="docs/screenshots/live-update.png" alt="The Live Update in the notification shade: on the clock since 07:58, today 1h 59m of 8h 41m, done at 17:09, with a progress bar and a Punch out button" width="420" />
+</p>
+
+<p align="center">
   <img src="docs/screenshots/year-light.png" alt="The year view: hours per payslip period for 2026, the yearly total, the monthly average and vacation days used" width="270" />
   &nbsp;
   <img src="docs/screenshots/pay-light.png" alt="The payslip: regular and overtime pay, gross, tax, deductions and net pay in pounds and euros" width="270" />
