@@ -46,9 +46,10 @@ object ReminderEngine {
         plan.due.forEach { Notifications.postReminder(context, it) }
         preferences.markFired(today.date, plan.due.map { it.kind })
 
-        val running = today.running
-        if (settings.liveClock && running != null) {
-            Notifications.showLiveClock(context, running, today.clockedMinutes(now), today.targetMinutes)
+        // A Live Update the user swiped away stays away until the next session.
+        val live = LiveClockState.of(today, now)?.takeIf { it.sessionKey != preferences.dismissedLiveSession }
+        if (settings.liveClock && live != null) {
+            Notifications.showLiveClock(context, live)
         } else {
             Notifications.hideLiveClock(context)
         }

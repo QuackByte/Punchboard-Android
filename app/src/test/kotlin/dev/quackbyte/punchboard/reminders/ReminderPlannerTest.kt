@@ -106,7 +106,7 @@ class ReminderPlannerTest {
     fun `live clock refreshes while punched in`() {
         val day = status(entries = listOf(TimeEntry("09:00", null)))
         val plan = ReminderPlanner.plan(at("09:30"), ReminderSettings(stillOnClock = false), day, emptySet())
-        assertEquals(at("09:45"), plan.nextCheck)
+        assertEquals(at("09:35"), plan.nextCheck)
     }
 
     @Test

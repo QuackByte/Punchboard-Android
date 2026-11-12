@@ -50,8 +50,11 @@ Android 8.0 or newer.
   time, with **Punch in** and **In 15 min** buttons.
 - *Still on the clock?* once today's target is done, with **Punch out**.
 - *Forgot to punch out?* if the clock is still running at a set time.
-- **Live clock notification** while punched in, with a running timer,
-  today's progress and **Punch out**.
+- **Live Update** while punched in (Android 16+): a chip in the status bar
+  counting up today's time, and on the lock screen and in the shade a card
+  with today's progress towards the target (turning to overtime past it),
+  when you'll be done, and **Punch out**. Older Android versions get the same
+  card as a pinned notification.
 - **Quick Settings tile** and **home-screen widget** to punch in and out from
   anywhere.
 

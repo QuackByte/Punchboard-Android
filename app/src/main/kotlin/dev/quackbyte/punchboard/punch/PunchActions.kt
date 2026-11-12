@@ -34,6 +34,8 @@ object PunchActions {
     const val ACTION_PUNCH_IN = "dev.quackbyte.punchboard.action.PUNCH_IN"
     const val ACTION_PUNCH_OUT = "dev.quackbyte.punchboard.action.PUNCH_OUT"
     const val ACTION_SNOOZE = "dev.quackbyte.punchboard.action.SNOOZE_PUNCH_IN"
+    const val ACTION_LIVE_DISMISSED = "dev.quackbyte.punchboard.action.LIVE_DISMISSED"
+    const val EXTRA_SESSION = "session"
 
     const val SNOOZE_MINUTES = 15L
 
@@ -101,7 +103,9 @@ class PunchActionReceiver : BroadcastReceiver() {
         scope.launch {
             try {
                 val app = context.applicationContext
-                if (action == PunchActions.ACTION_SNOOZE) {
+                if (action == PunchActions.ACTION_LIVE_DISMISSED) {
+                    ReminderPreferences(app).dismissedLiveSession = intent.getStringExtra(PunchActions.EXTRA_SESSION)
+                } else if (action == PunchActions.ACTION_SNOOZE) {
                     ReminderPreferences(app).snooze(ReminderKind.PunchIn, LocalDateTime.now().plusMinutes(PunchActions.SNOOZE_MINUTES))
                     ReminderEngine.dismiss(app, ReminderKind.PunchIn)
                     ReminderEngine.check(app)

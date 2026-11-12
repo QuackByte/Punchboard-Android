@@ -59,6 +59,11 @@ class ReminderPreferences(context: Context) {
 
     fun clearSnooze(kind: ReminderKind) = prefs.edit { remove(KEY_SNOOZE_PREFIX + kind.name) }
 
+    /** The session whose Live Update the user dismissed, so it isn't posted again. */
+    var dismissedLiveSession: String?
+        get() = prefs.getString(KEY_LIVE_DISMISSED, null)
+        set(value) = prefs.edit { putString(KEY_LIVE_DISMISSED, value) }
+
     private fun parseTime(value: String): LocalTime? = runCatching { LocalTime.parse(value) }.getOrNull()
 
     private companion object {
@@ -69,5 +74,6 @@ class ReminderPreferences(context: Context) {
         const val KEY_FIRED_DATE = "fired_date"
         const val KEY_FIRED = "fired"
         const val KEY_SNOOZE_PREFIX = "snooze_"
+        const val KEY_LIVE_DISMISSED = "live_dismissed"
     }
 }
