@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "savedAt": "2026-10-14T14:40:12.345Z",
+  "uiState": { "monthKey": "2026-10", "graphYear": 2026, "futureUiFlag": true },
+  "settings": {
+    "payslipStartDay": 21,
+    "vacationDaysPerYear": 25,
+    "leaveYearStartMonth": 1,
+    "breakMinutes": 30,
+    "breakAfterHours": 6,
+    "roundingMinutes": 0,
+    "overtimeMultiplier": 1.5,
+    "overtimeIncludesLongDays": false,
+    "balanceWeek": true,
+    "carryBalance": true,
+    "balanceResetsYearly": false,
+    "balanceCapHours": 0,
+    "balanceStartDate": "",
+    "someNewerSetting": { "nested": [1, 2, 3] }
+  },
+  "savedMonths": ["2026-09", "2026-10"],
+  "activityLog": [
+    {
+      "id": "a1",
+      "monthKey": "2026-10",
+      "timestamp": "2026-10-13T16:20:00.000Z",
+      "type": "hours-change",
+      "message": "Logged sessions on 2026-9-13"
+    }
+  ],
+  "months": {
+    "2026-09": {
+      "selectedDays": ["mon", "tue", "wed", "thu", "fri"],
+      "hoursPerDay": 8,
+      "hourlyRate": 24,
+      "currency": "GBP",
+      "secondaryCurrency": "EUR",
+      "conversionRate": 1.16,
+      "currencyConversionEnabled": true,
+      "taxPercent": 20,
+      "extraDeduction": 45,
+      "defaultHours": 8,
+      "exceptions": { "2026-7-28": "vacation" },
+      "dailyHours": { "2026-7-24": 7.5, "2026-7-25": 8 },
+      "extraHours": {}
+    },
+    "2026-10": {
+      "selectedDays": ["mon", "tue", "wed", "thu", "fri"],
+      "hoursPerDay": 8,
+      "hourlyRate": 24,
+      "currency": "GBP",
+      "secondaryCurrency": "EUR",
+      "conversionRate": 1.16,
+      "currencyConversionEnabled": true,
+      "taxPercent": 20,
+      "extraDeduction": 45,
+      "defaultHours": 8,
+      "exceptions": { "2026-8-29": "sick", "2026-9-2": "vacation" },
+      "dailyHours": { "2026-9-13": 7.716666666666667, "2026-9-14": 3.5666666666666664 },
+      "extraHours": { "2026-9-3": 3.5 },
+      "timeEntries": {
+        "2026-9-13": [
+          { "start": "08:47", "end": "13:02" },
+          { "start": "13:52", "end": "17:20", "note": "On call" }
+        ],
+        "2026-9-14": [
+          { "start": "08:57", "end": "12:31" },
+          { "start": "13:15", "end": null }
+        ],
+        "2026-9-3": [{ "start": "10:00", "end": "13:30" }]
+      },
+      "salary": {
+        "enabled": false,
+        "basis": "weekly",
+        "weeklyHours": 40,
+        "yearlyAmount": 0,
+        "overtimePaid": false,
+        "futureSalaryField": "kept"
+      },
+      "futureMonthField": 42
+    }
+  },
+  "topLevelFromTheFuture": "keep me"
+}

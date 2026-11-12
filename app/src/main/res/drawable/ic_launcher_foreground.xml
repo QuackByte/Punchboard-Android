@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The punch card from the desktop icon: three ascending punched holes. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group
+        android:pivotX="512"
+        android:pivotY="512"
+        android:scaleX="0.8"
+        android:scaleY="0.8">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M388,232h248a56,56 0,0 1,56 56v448a56,56 0,0 1,-56 56h-248a56,56 0,0 1,-56 -56v-448a56,56 0,0 1,56 -56z M486,232a26,26 0,0 0,52 0z M386,680a34,34 0,1 0,68 0a34,34 0,1 0,-68 0z M472,560a40,40 0,1 0,80 0a40,40 0,1 0,-80 0z M558,440a46,46 0,1 0,92 0a46,46 0,1 0,-92 0z" />
+    </group>
+</vector>
