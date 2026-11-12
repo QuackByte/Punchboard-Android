@@ -80,4 +80,7 @@ jobs:
         run: |
           version="${TAG#v}"
           cp app/build/outputs/apk/release/app-release.apk "Punchboard-$version.apk"
-          gh release upload "$TAG" "Punchboard-$version.apk" --clobber
+          # A fixed name too, so .../releases/latest/download/Punchboard.apk
+          # always serves the newest build (the website links to it).
+          cp app/build/outputs/apk/release/app-release.apk Punchboard.apk
+          gh release upload "$TAG" "Punchboard-$version.apk" Punchboard.apk --clobber
