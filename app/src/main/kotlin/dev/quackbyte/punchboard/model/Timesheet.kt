@@ -133,5 +133,5 @@ fun timesheetCsv(rows: List<TimesheetRow>, period: PeriodResult, pay: PayResult,
         money.forEach { (label, amount) -> lines += listOf("$label ($currency)", amount * rate) }
     }
     // CRLF and a BOM so Excel opens it as UTF-8 with the en dashes intact.
-    return "﻿" + lines.joinToString("\r\n") { line -> line.joinToString(",") { csvCell(it) } }
+    return "\uFEFF" + lines.joinToString("\r\n") { line -> line.joinToString(",") { csvCell(it) } }
 }

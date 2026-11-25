@@ -1,5 +1,6 @@
 package dev.quackbyte.punchboard.widget
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -201,7 +202,9 @@ class PunchTileService : TileService() {
         }
     }
 
+    // Android 14 throws on the Intent overload, which only older versions reach here.
     @Suppress("DEPRECATION")
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun openApp() {
         val intent = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (android.os.Build.VERSION.SDK_INT >= 34) {
