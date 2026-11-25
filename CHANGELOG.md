@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/QuackByte/Punchboard-Android/compare/v1.0.0...v1.1.0) (2026-11-25)
+
+
+### Features
+
+* carry the extra deduction forward to later periods ([#6](https://github.com/QuackByte/Punchboard-Android/issues/6)) ([a3116f4](https://github.com/QuackByte/Punchboard-Android/commit/a3116f417880bdf18db0ae7d9ebc2ec5d9641d56))
+* change the punch-in time from the punch clock ([#6](https://github.com/QuackByte/Punchboard-Android/issues/6)) ([a3116f4](https://github.com/QuackByte/Punchboard-Android/commit/a3116f417880bdf18db0ae7d9ebc2ec5d9641d56))
+
 ## [1.0.0](https://github.com/QuackByte/Punchboard-Android/compare/v0.1.0...v1.0.0) (2026-11-12)
 
 
