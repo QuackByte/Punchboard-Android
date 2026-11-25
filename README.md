@@ -31,7 +31,8 @@ same look, the same numbers, and the same data file.
 - **Punch clock** — punch in and out with one tap. The running session is
   tracked live and saved as a real start and end time. See when you'll be
   done for the day (automatic break included) and the hours you've banked
-  or owe from earlier weeks.
+  or owe from earlier weeks. Punched in late? Tap the punch-in time to
+  correct it.
 - **Live Update** — while you're on the clock, a chip in the status bar
   counts up today's time, and the lock screen shows your progress towards
   today's target with a **Punch out** button (Android 16+; older versions
@@ -169,6 +170,9 @@ Pull requests run the tests and a build in CI.
   entered again every period. For a one-off, set it back in the next period.
   Months the desktop has already saved keep the desktop's value until you
   change the deduction in that period or an earlier one.
+- **The punch-in time is editable on the punch clock.** The desktop only
+  edits it in the day's sessions; on a phone that's several taps away. Both
+  store the same session.
 
 ### Stack
 

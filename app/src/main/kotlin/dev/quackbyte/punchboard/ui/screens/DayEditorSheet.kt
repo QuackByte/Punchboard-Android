@@ -31,7 +31,6 @@ import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -443,28 +442,38 @@ private fun MarkButton(label: String, color: Color, active: Boolean, modifier: M
 }
 
 @Composable
-fun TimeDialog(title: String, initialMinutes: Int, onDismiss: () -> Unit, onConfirm: (Int) -> Unit) {
+fun TimeDialog(
+    title: String,
+    initialMinutes: Int,
+    onDismiss: () -> Unit,
+    /** Why the picked time can't be set, or null when it can. */
+    error: (Int) -> String? = { null },
+    onConfirm: (Int) -> Unit,
+) {
     val pb = LocalPb.current
     val state = rememberTimePickerState(initialHour = initialMinutes / 60, initialMinute = initialMinutes % 60, is24Hour = true)
-    LaunchedEffect(Unit) { }
+    val problem = error(state.hour * 60 + state.minute)
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = pb.popover,
         title = { Text(title, fontFamily = Sans, fontWeight = FontWeight.Bold) },
         text = {
-            TimePicker(
-                state,
-                colors = TimePickerDefaults.colors(
-                    clockDialColor = pb.muted,
-                    selectorColor = pb.primary,
-                    timeSelectorSelectedContainerColor = pb.primary.copy(alpha = 0.18f),
-                    timeSelectorUnselectedContainerColor = pb.muted,
-                    timeSelectorSelectedContentColor = pb.foreground,
-                    timeSelectorUnselectedContentColor = pb.foreground,
-                ),
-            )
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                TimePicker(
+                    state,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = pb.muted,
+                        selectorColor = pb.primary,
+                        timeSelectorSelectedContainerColor = pb.primary.copy(alpha = 0.18f),
+                        timeSelectorUnselectedContainerColor = pb.muted,
+                        timeSelectorSelectedContentColor = pb.foreground,
+                        timeSelectorUnselectedContentColor = pb.foreground,
+                    ),
+                )
+                if (problem != null) Text(problem, style = PbType.bodySmall, color = pb.destructive)
+            }
         },
-        confirmButton = { TextButton({ onConfirm(state.hour * 60 + state.minute) }) { Text("Set") } },
+        confirmButton = { TextButton({ onConfirm(state.hour * 60 + state.minute) }, enabled = problem == null) { Text("Set") } },
         dismissButton = { TextButton(onDismiss) { Text("Cancel") } },
     )
 }

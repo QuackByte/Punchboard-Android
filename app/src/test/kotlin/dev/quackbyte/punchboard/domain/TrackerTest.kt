@@ -55,6 +55,32 @@ class TrackerTest {
     }
 
     @Test
+    fun `the running session's punch-in time can be moved`() {
+        // Running since 13:15, after 08:57–12:31.
+        val after = editor().setPunchIn(13 * 60 + 5, fixed)
+        val day = after.months.getValue("2026-10")
+        assertEquals(listOf(TimeEntry("08:57", "12:31"), TimeEntry("13:05", null)), day.timeEntries!!.getValue("2026-9-14"))
+        val end = TimeEntry("08:57", "12:31")
+        assertEquals(listOf(end, TimeEntry("12:31", null)), editor().setPunchIn(12 * 60 + 31, fixed).months.getValue("2026-10").timeEntries!!.getValue("2026-9-14"))
+        assertEquals(TimeEntry("15:42", null), editor().setPunchIn(15 * 60 + 42, fixed).months.getValue("2026-10").timeEntries!!.getValue("2026-9-14").last())
+        assertEquals(desktop, editor().setPunchIn(13 * 60 + 15, fixed))
+    }
+
+    @Test
+    fun `a punch-in time can't be in the future, overlap a session or lack a running one`() {
+        assertEquals("That's later than now", editor().punchInError(15 * 60 + 43, fixed))
+        assertEquals("Overlaps 08:57–12:31", editor().punchInError(12 * 60 + 30, fixed))
+        assertNull(editor().punchInError(12 * 60 + 31, fixed))
+        assertEquals(desktop, editor().setPunchIn(15 * 60 + 43, fixed))
+        assertEquals(desktop, editor().setPunchIn(12 * 60, fixed))
+        val out = editor().punchOut(fixed)
+        assertEquals("You're not on the clock", editor(out).punchInError(9 * 60, fixed))
+        assertEquals(out, editor(out).setPunchIn(9 * 60, fixed))
+        // Left open yesterday: that's the day editor's job.
+        assertEquals("You're not on the clock", editor().punchInError(9 * 60, fixed.plusDays(1)))
+    }
+
+    @Test
     fun `punching in on a new period creates its month with carried-forward pay`() {
         val newPeriod = LocalDateTime.of(2026, 10, 22, 9, 0)
         val clean = editor().punchOut(fixed)

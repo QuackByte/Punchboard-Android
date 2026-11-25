@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,11 +41,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.quackbyte.punchboard.domain.TrackerEditor
 import dev.quackbyte.punchboard.model.Clock
 import dev.quackbyte.punchboard.model.DateText
 import dev.quackbyte.punchboard.model.TimeEntry
@@ -74,11 +78,12 @@ fun TodayScreen(
     snapshot: TrackerSnapshot,
     onPunchIn: () -> Unit,
     onPunchOut: () -> Unit,
+    onSetPunchIn: (Int) -> Unit,
     onGoToCurrentPeriod: () -> Unit,
     onEditDay: (java.time.LocalDate) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        PunchClockCard(snapshot, onPunchIn, onPunchOut, onGoToCurrentPeriod, onEditDay)
+        PunchClockCard(snapshot, onPunchIn, onPunchOut, onSetPunchIn, onGoToCurrentPeriod, onEditDay)
         HoursCard(snapshot)
     }
 }
@@ -102,6 +107,7 @@ fun PunchClockCard(
     snapshot: TrackerSnapshot,
     onPunchIn: () -> Unit,
     onPunchOut: () -> Unit,
+    onSetPunchIn: (Int) -> Unit,
     onGoToCurrentPeriod: () -> Unit,
     onEditDay: (java.time.LocalDate) -> Unit,
 ) {
@@ -129,6 +135,7 @@ fun PunchClockCard(
         else -> 0.0
     }
     val accent by animateColorAsState(if (isRunning) pb.signal else pb.brand, tween(700), label = "accent")
+    var editingPunchIn by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(progress.toFloat(), tween(700), label = "progress")
 
     Column(
@@ -163,8 +170,11 @@ fun PunchClockCard(
             Spacer(Modifier.width(8.dp))
             Text("%02d".format(now.second), Modifier.padding(bottom = 8.dp), fontFamily = Mono, fontSize = 22.sp, color = pb.inkMuted)
         }
-        Spacer(Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        val editPunchIn = Modifier.clickable(role = Role.Button, onClickLabel = "Change punch-in time") { editingPunchIn = true }
+        Row(
+            Modifier.clip(RoundedCornerShape(10.dp)).then(if (isRunning) editPunchIn else Modifier).heightIn(min = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             when {
                 isRunning -> {
                     PulsingDot(pb.signal)
@@ -172,6 +182,8 @@ fun PunchClockCard(
                     Text("On the clock since ", style = PbType.body, color = pb.inkForeground)
                     MonoText(open!!.entry.start, size = 15f, color = pb.inkForeground)
                     Text(" · ${formatDuration(runningMinutes / 60.0)}", style = PbType.body, color = pb.inkMuted)
+                    Spacer(Modifier.width(10.dp))
+                    Icon(Lucide.Pencil, null, Modifier.size(14.dp), tint = pb.inkMuted)
                 }
                 isStale -> {
                     Dot(pb.vacation)
@@ -198,7 +210,7 @@ fun PunchClockCard(
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(6.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             MonoText("Today", size = 12.5f, color = pb.inkMuted)
             Row {
@@ -249,7 +261,7 @@ fun PunchClockCard(
         if (entries.isNotEmpty() && viewing) {
             Spacer(Modifier.height(16.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                entries.forEach { SessionChip(it) }
+                entries.forEach { SessionChip(it, onClick = if (it.isRunning && isRunning) ({ editingPunchIn = true }) else null) }
             }
         }
 
@@ -274,16 +286,33 @@ fun PunchClockCard(
             )
         }
     }
+
+    // Punched out meanwhile (from the notification, say): nothing left to edit.
+    LaunchedEffect(isRunning) { if (!isRunning) editingPunchIn = false }
+    if (editingPunchIn && isRunning) {
+        val editor = TrackerEditor(snapshot.data)
+        TimeDialog(
+            title = "Punched in at",
+            initialMinutes = Clock.parse(open!!.entry.start) ?: nowMinutes,
+            onDismiss = { editingPunchIn = false },
+            error = { editor.punchInError(it, now) },
+            onConfirm = { minutes ->
+                onSetPunchIn(minutes)
+                editingPunchIn = false
+            },
+        )
+    }
 }
 
 @Composable
-private fun SessionChip(entry: TimeEntry) {
+private fun SessionChip(entry: TimeEntry, onClick: (() -> Unit)? = null) {
     val pb = LocalPb.current
     Row(
         Modifier
             .clip(RoundedCornerShape(999.dp))
             .background(pb.inkForeground.copy(alpha = 0.04f))
             .border(1.dp, pb.inkBorder, RoundedCornerShape(999.dp))
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClickLabel = "Change punch-in time", onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

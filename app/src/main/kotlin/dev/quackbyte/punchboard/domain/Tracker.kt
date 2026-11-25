@@ -347,6 +347,35 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
         return setDayEntries(month, today, entries)
     }
 
+    /**
+     * Why today's running session can't start at [minutes], or null when it
+     * can. A start after now would read as a session that ran past midnight.
+     */
+    fun punchInError(minutes: Int, at: LocalDateTime = now()): String? {
+        val today = at.toLocalDate()
+        val month = tracker.currentPeriod(today)
+        val open = tracker.openSession(month)?.takeIf { it.key == DayKeys.of(today) } ?: return "You're not on the clock"
+        if (minutes > at.hour * 60 + at.minute) return "That's later than now"
+        val overlap = tracker.todayEntries(today).withIndex().firstOrNull { (index, entry) ->
+            val end = entry.end?.let(Clock::parse)
+            index != open.index && end != null && end > minutes
+        }?.value ?: return null
+        return "Overlaps ${overlap.start}–${overlap.end}"
+    }
+
+    /** Moves the start of today's running session. No-op when [punchInError] objects. */
+    fun setPunchIn(minutes: Int, at: LocalDateTime = now()): DataFile {
+        if (punchInError(minutes, at) != null) return data
+        val today = at.toLocalDate()
+        val month = tracker.currentPeriod(today)
+        val open = tracker.openSession(month) ?: return data
+        val start = Clock.format(minutes)
+        if (open.entry.start == start) return data
+        val entries = tracker.todayEntries(today)
+            .mapIndexed { index, entry -> if (index == open.index) entry.copy(start = start) else entry }
+        return setDayEntries(month, today, entries)
+    }
+
     // Schedule (this period only).
 
     fun toggleWeekday(month: YearMonth, weekday: String): DataFile = withMonth(month) { current ->
