@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/QuackByte/Punchboard-Android/compare/v1.1.0...v1.1.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* clear the lint errors that failed lintDebug ([#9](https://github.com/QuackByte/Punchboard-Android/issues/9)) ([d8fb5d7](https://github.com/QuackByte/Punchboard-Android/commit/d8fb5d7bd2c32dbcacc5d835b98346cfc61e9c2c))
+
 ## [1.1.0](https://github.com/QuackByte/Punchboard-Android/compare/v1.0.0...v1.1.0) (2026-11-25)
 
 
