@@ -428,7 +428,6 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
         return forward(month) { it.copy(taxPercent = next) }.log(ActivityType.ValueChange, "Updated tax to ${next.js()}%", month)
     }
 
-    /** Unlike the desktop, which keeps the deduction to one month, this carries forward like tax. */
     fun setExtraDeduction(month: YearMonth, value: Double): DataFile {
         val next = maxOf(0.0, value.finiteOr0())
         return forward(month) { it.copy(extraDeduction = next) }
