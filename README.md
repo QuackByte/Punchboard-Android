@@ -49,6 +49,8 @@ same look, the same numbers, and the same data file.
   or capped.
 - **Pay** — by the hour or on a fixed salary, with tax, deductions and an
   optional second currency: gross, net and your effective hourly rate.
+  Changing a pay rate, tax or the extra deduction applies to that payslip
+  period and every later one.
 - **Year** — hours per payslip period across the year, plus vacation taken,
   booked and left against your allowance.
 - **Timesheets** — share a period as a CSV or a one-page PDF.
@@ -158,6 +160,15 @@ Pull requests run the tests and a build in CI.
 - A running session is written as `"end": null`; the key must be present.
 - Fields the app doesn't model are carried through every save, so a newer
   desktop's settings survive.
+
+### Differences from the desktop
+
+- **Extra deduction carries forward.** The desktop keeps it to the month it's
+  entered in and starts new months at 0. Here it applies from that period on,
+  like tax and the pay rate, so a deduction that repeats doesn't have to be
+  entered again every period. For a one-off, set it back in the next period.
+  Months the desktop has already saved keep the desktop's value until you
+  change the deduction in that period or an earlier one.
 
 ### Stack
 

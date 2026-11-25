@@ -112,6 +112,27 @@ class TrackerTest {
     }
 
     @Test
+    fun `the extra deduction carries forward to later months, saved or not`() {
+        val november = YearMonth.of(2026, 11)
+        val december = YearMonth.of(2026, 12)
+        val withNovember = editor().setHoursPerDay(november, 7.0)
+        val september = withNovember.months.getValue("2026-09").extraDeduction
+
+        val deducted = editor(withNovember).setExtraDeduction(october, 42.5)
+        assertEquals(42.5, deducted.months.getValue("2026-10").extraDeduction, 0.0)
+        assertEquals(42.5, deducted.months.getValue("2026-11").extraDeduction, 0.0)
+        assertEquals(september, deducted.months.getValue("2026-09").extraDeduction, 0.0)
+        assertEquals(42.5, Tracker(deducted).monthData(december).extraDeduction, 0.0)
+        assertTrue("2026-12" !in deducted.months)
+
+        // Clearing it later leaves the earlier months alone.
+        val cleared = editor(deducted).setExtraDeduction(november, 0.0)
+        assertEquals(42.5, cleared.months.getValue("2026-10").extraDeduction, 0.0)
+        assertEquals(0.0, cleared.months.getValue("2026-11").extraDeduction, 0.0)
+        assertEquals(0.0, Tracker(cleared).monthData(december).extraDeduction, 0.0)
+    }
+
+    @Test
     fun `turning a salary on starts from the schedule's weekly hours`() {
         val after = editor().setSalary(october, { it.copy(enabled = true) }, "Switched to a fixed salary")
         assertEquals(SalarySettings(enabled = true, weeklyHours = 40.0), after.months.getValue("2026-10").salary)

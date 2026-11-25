@@ -68,6 +68,7 @@ class Tracker(val data: DataFile) {
         return TrackerData(
             hourlyRate = maxOf(0.0, prior.hourlyRate),
             taxPercent = clampPercent(prior.taxPercent),
+            extraDeduction = maxOf(0.0, prior.extraDeduction),
             defaultHours = maxOf(0.0, prior.defaultHours),
             currency = prior.currency,
             secondaryCurrency = prior.secondaryCurrency,
@@ -357,12 +358,6 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
     fun setHoursPerDay(month: YearMonth, value: Double): DataFile =
         withMonth(month) { it.copy(hoursPerDay = value) }.log(ActivityType.ValueChange, "Updated hours/day to ${value.js()}", month)
 
-    fun setExtraDeduction(month: YearMonth, value: Double): DataFile {
-        val next = maxOf(0.0, value.finiteOr0())
-        return withMonth(month) { it.copy(extraDeduction = next) }
-            .log(ActivityType.ValueChange, "Updated extra deduction to ${next.js()}", month)
-    }
-
     // Pay settings carry forward: this period and every saved later one.
 
     private fun forward(month: YearMonth, transform: (TrackerData) -> TrackerData): DataFile {
@@ -402,6 +397,13 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
     fun setTaxPercent(month: YearMonth, value: Double): DataFile {
         val next = clampPercent(value)
         return forward(month) { it.copy(taxPercent = next) }.log(ActivityType.ValueChange, "Updated tax to ${next.js()}%", month)
+    }
+
+    /** Unlike the desktop, which keeps the deduction to one month, this carries forward like tax. */
+    fun setExtraDeduction(month: YearMonth, value: Double): DataFile {
+        val next = maxOf(0.0, value.finiteOr0())
+        return forward(month) { it.copy(extraDeduction = next) }
+            .log(ActivityType.ValueChange, "Updated extra deduction to ${next.js()}", month)
     }
 
     fun setDefaultHours(month: YearMonth, value: Double): DataFile {
