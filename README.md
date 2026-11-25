@@ -31,7 +31,8 @@ same look, the same numbers, and the same data file.
 - **Punch clock** — punch in and out with one tap. The running session is
   tracked live and saved as a real start and end time. See when you'll be
   done for the day (automatic break included) and the hours you've banked
-  or owe from earlier weeks.
+  or owe from earlier weeks. Punched in late? Tap the punch-in time to
+  correct it.
 - **Live Update** — while you're on the clock, a chip in the status bar
   counts up today's time, and the lock screen shows your progress towards
   today's target with a **Punch out** button (Android 16+; older versions
@@ -49,6 +50,8 @@ same look, the same numbers, and the same data file.
   or capped.
 - **Pay** — by the hour or on a fixed salary, with tax, deductions and an
   optional second currency: gross, net and your effective hourly rate.
+  Changing a pay rate, tax or the extra deduction applies to that payslip
+  period and every later one.
 - **Year** — hours per payslip period across the year, plus vacation taken,
   booked and left against your allowance.
 - **Timesheets** — share a period as a CSV or a one-page PDF.
@@ -158,6 +161,18 @@ Pull requests run the tests and a build in CI.
 - A running session is written as `"end": null`; the key must be present.
 - Fields the app doesn't model are carried through every save, so a newer
   desktop's settings survive.
+
+### Differences from the desktop
+
+- **Extra deduction carries forward.** The desktop keeps it to the month it's
+  entered in and starts new months at 0. Here it applies from that period on,
+  like tax and the pay rate, so a deduction that repeats doesn't have to be
+  entered again every period. For a one-off, set it back in the next period.
+  Months the desktop has already saved keep the desktop's value until you
+  change the deduction in that period or an earlier one.
+- **The punch-in time is editable on the punch clock.** The desktop only
+  edits it in the day's sessions; on a phone that's several taps away. Both
+  store the same session.
 
 ### Stack
 

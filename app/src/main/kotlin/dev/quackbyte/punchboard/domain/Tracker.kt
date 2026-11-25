@@ -68,6 +68,7 @@ class Tracker(val data: DataFile) {
         return TrackerData(
             hourlyRate = maxOf(0.0, prior.hourlyRate),
             taxPercent = clampPercent(prior.taxPercent),
+            extraDeduction = maxOf(0.0, prior.extraDeduction),
             defaultHours = maxOf(0.0, prior.defaultHours),
             currency = prior.currency,
             secondaryCurrency = prior.secondaryCurrency,
@@ -346,6 +347,35 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
         return setDayEntries(month, today, entries)
     }
 
+    /**
+     * Why today's running session can't start at [minutes], or null when it
+     * can. A start after now would read as a session that ran past midnight.
+     */
+    fun punchInError(minutes: Int, at: LocalDateTime = now()): String? {
+        val today = at.toLocalDate()
+        val month = tracker.currentPeriod(today)
+        val open = tracker.openSession(month)?.takeIf { it.key == DayKeys.of(today) } ?: return "You're not on the clock"
+        if (minutes > at.hour * 60 + at.minute) return "That's later than now"
+        val overlap = tracker.todayEntries(today).withIndex().firstOrNull { (index, entry) ->
+            val end = entry.end?.let(Clock::parse)
+            index != open.index && end != null && end > minutes
+        }?.value ?: return null
+        return "Overlaps ${overlap.start}–${overlap.end}"
+    }
+
+    /** Moves the start of today's running session. No-op when [punchInError] objects. */
+    fun setPunchIn(minutes: Int, at: LocalDateTime = now()): DataFile {
+        if (punchInError(minutes, at) != null) return data
+        val today = at.toLocalDate()
+        val month = tracker.currentPeriod(today)
+        val open = tracker.openSession(month) ?: return data
+        val start = Clock.format(minutes)
+        if (open.entry.start == start) return data
+        val entries = tracker.todayEntries(today)
+            .mapIndexed { index, entry -> if (index == open.index) entry.copy(start = start) else entry }
+        return setDayEntries(month, today, entries)
+    }
+
     // Schedule (this period only).
 
     fun toggleWeekday(month: YearMonth, weekday: String): DataFile = withMonth(month) { current ->
@@ -356,12 +386,6 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
 
     fun setHoursPerDay(month: YearMonth, value: Double): DataFile =
         withMonth(month) { it.copy(hoursPerDay = value) }.log(ActivityType.ValueChange, "Updated hours/day to ${value.js()}", month)
-
-    fun setExtraDeduction(month: YearMonth, value: Double): DataFile {
-        val next = maxOf(0.0, value.finiteOr0())
-        return withMonth(month) { it.copy(extraDeduction = next) }
-            .log(ActivityType.ValueChange, "Updated extra deduction to ${next.js()}", month)
-    }
 
     // Pay settings carry forward: this period and every saved later one.
 
@@ -402,6 +426,13 @@ class TrackerEditor(private val data: DataFile, private val now: () -> LocalDate
     fun setTaxPercent(month: YearMonth, value: Double): DataFile {
         val next = clampPercent(value)
         return forward(month) { it.copy(taxPercent = next) }.log(ActivityType.ValueChange, "Updated tax to ${next.js()}%", month)
+    }
+
+    /** Unlike the desktop, which keeps the deduction to one month, this carries forward like tax. */
+    fun setExtraDeduction(month: YearMonth, value: Double): DataFile {
+        val next = maxOf(0.0, value.finiteOr0())
+        return forward(month) { it.copy(extraDeduction = next) }
+            .log(ActivityType.ValueChange, "Updated extra deduction to ${next.js()}", month)
     }
 
     fun setDefaultHours(month: YearMonth, value: Double): DataFile {

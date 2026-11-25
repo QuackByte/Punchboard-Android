@@ -17,6 +17,7 @@ import dev.quackbyte.punchboard.domain.TodayTarget
 import dev.quackbyte.punchboard.domain.Tracker
 import dev.quackbyte.punchboard.domain.TrackerEditor
 import dev.quackbyte.punchboard.model.ActivityLogEntry
+import dev.quackbyte.punchboard.model.Clock
 import dev.quackbyte.punchboard.model.DataFile
 import dev.quackbyte.punchboard.model.DayException
 import dev.quackbyte.punchboard.model.DayKeys
@@ -219,6 +220,15 @@ class TrackerViewModel(app: Application) : AndroidViewModel(app) {
     fun punchIn() = edit { it.punchIn() }
 
     fun punchOut() = edit { it.punchOut() }
+
+    /** Moves today's running session to start at [minutes]; undoable. */
+    fun setPunchIn(minutes: Int) {
+        val snapshot = (screen.value as? Screen.Ready)?.snapshot ?: return
+        val editor = TrackerEditor(snapshot.data)
+        if (editor.setPunchIn(minutes) == snapshot.data) return
+        val today = LocalDate.now()
+        editDay(snapshot.tracker.currentPeriod(today), today, "Punch-in moved to ${Clock.format(minutes)}") { it.setPunchIn(minutes) }
+    }
 
     fun applyDayInput(month: YearMonth, date: LocalDate, text: String): Boolean {
         val data = (screen.value as? Screen.Ready)?.snapshot?.data ?: return false

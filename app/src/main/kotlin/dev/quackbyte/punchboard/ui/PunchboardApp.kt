@@ -161,7 +161,7 @@ private fun Main(vm: TrackerViewModel, snapshot: TrackerSnapshot, openTab: Tab?)
                         MonthNavigator(snapshot, vm::moveMonth, { pickingMonth = true }, vm::goToCurrentPeriod)
                     }
                     when (tab) {
-                        Tab.Today -> TodayScreen(snapshot, vm::punchIn, vm::punchOut, vm::goToCurrentPeriod, editDay)
+                        Tab.Today -> TodayScreen(snapshot, vm::punchIn, vm::punchOut, vm::setPunchIn, vm::goToCurrentPeriod, editDay)
                         Tab.Card -> CardScreen(
                             snapshot,
                             DayMenuActions(
