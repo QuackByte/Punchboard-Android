@@ -162,18 +162,6 @@ Pull requests run the tests and a build in CI.
 - Fields the app doesn't model are carried through every save, so a newer
   desktop's settings survive.
 
-### Differences from the desktop
-
-- **Extra deduction carries forward.** The desktop keeps it to the month it's
-  entered in and starts new months at 0. Here it applies from that period on,
-  like tax and the pay rate, so a deduction that repeats doesn't have to be
-  entered again every period. For a one-off, set it back in the next period.
-  Months the desktop has already saved keep the desktop's value until you
-  change the deduction in that period or an earlier one.
-- **The punch-in time is editable on the punch clock.** The desktop only
-  edits it in the day's sessions; on a phone that's several taps away. Both
-  store the same session.
-
 ### Stack
 
 Kotlin, Jetpack Compose, kotlinx.serialization and AndroidX. No other
